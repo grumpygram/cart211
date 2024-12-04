@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hike Template</title>
+    <!--Tab Icon-->
+    <link rel="icon" href="/Resources/Images/IconBorder.png" type="image/x-icon">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!--Leaflet Sources-->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!--GPX parser-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/2.1.0/gpx.min.js" defer></script>
+
+    <!--My stylesheet-->
+    <link rel="stylesheet" href="./Hikography.css">
+
+    <script type="module"> 
+        //This script runs as soon as the head section is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            const params = new URLSearchParams(window.location.search);
+            const hikeName = params.get("hike");
+            if (hikeName) {
+                document.title = `${hikeName} - Hikography`;
+                document.getElementById('page-title').textContent = hikeName;
+            }
+        });
+    </script>
+</head>
+
+<body>
+    <div class=" header"></div>
+
+    <nav class="pageLinks">
+        <a href="about.html" id="about-link">About</a>
+    </nav>
+
+    <div class="separator"></div>
+
+    <nav class="webName">
+        <a href="index.html" id="home-link">Hikography</a>
+    </nav>
+
+    <div class="title">
+        <h1  id="page-title">Graeme Peters</h1>
+    </div>
+
+    <div class="content">
+        <p>In Situ</p>
+    </div>
+
+    <div class="map-container">
+        <div id="smallMap"></div>
+    </div>
+
+    <!--Gallery Container-->
+    <div class="content">
+        <p>In Suma Cavea</p>
+    </div> 
+    
+    <div id="photo-gallery" class="image-container"></div>
+
+<!--Modal to display the full image-->
+<div id="image-modal" class="image-modal">
+    <div class="image-modal-content">
+        <img id="modal-image" src="" alt="Full Image">
+    </div>
+</div>
+
+
+
+    <script type="module">
+        import {initializeMap, addPhotoToMap, closeImageModal, hikePhotos} from "./Hikography.js";
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const params = new URLSearchParams(window.location.search);
+            const hikeName = params.get("hike");
+
+            if (!hikeName) {
+                console.error('Hike name not specified in URL');
+                return;
+            }
+
+            let formattedHikeName = hikeName.replace(/\s+/g, "_").replace(/'/g, "");
+            let gpxFilePath = "/gpxFiles/" + formattedHikeName + "/" + hikeName + ".gpx";
+
+            // Initializing the map for the hike
+            let smallMap = initializeMap('smallMap', gpxFilePath);
+
+            //Loading and adding photos for the specific hike
+            if (hikePhotos[hikeName]) {
+                const gallery = document.getElementById('photo-gallery');
+                hikePhotos[hikeName].forEach(photo => {
+                    addPhotoToMap(smallMap, photo.coords[0], photo.coords[1], photo.path);
+
+                    //Adding photos to the gallery
+                    const galleryItem = document.createElement('div');
+                    galleryItem.className = 'image-item';
+                    galleryItem.innerHTML = `
+                    <img src="${photo.path}" alt="Hike photo">
+                    <div class="overlay"></div>
+                    `;
+                    gallery.appendChild(galleryItem);
+
+                    galleryItem.addEventListener('click', () => {
+                        const modal = document.getElementById('image-modal');
+                        const modalImage = document.getElementById('modal-image');
+                        modalImage.src = photo.path;
+                        modal.style.display = 'block'; 
+                    });
+                });
+            } else {
+                console.error('No photos found for hike:', hikeName);
+            }
+            //Ensure modal is hidden when the page loads
+            const modal = document.getElementById('image-modal');
+            modal.style.display = 'none';
+        });
+    </script>
+</body>
+</html>
